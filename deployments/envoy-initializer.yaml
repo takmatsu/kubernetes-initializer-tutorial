@@ -1,6 +1,7 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
+  namespace: envoy-initializer
   initializers:
     pending: []
   labels:
@@ -16,5 +17,5 @@ spec:
     spec:
       containers:
         - name: envoy-initializer
-          image: gcr.io/hightowerlabs/envoy-initializer:0.0.1
+          image: takmatsu/envoy-initializer:0.0.1
           imagePullPolicy: Always
