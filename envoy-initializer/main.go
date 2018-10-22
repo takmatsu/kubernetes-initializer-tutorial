@@ -59,7 +59,7 @@ func main() {
 	flag.StringVar(&annotation, "annotation", defaultAnnotation, "The annotation to trigger initialization")
 	flag.StringVar(&configmap, "configmap", defaultConfigmap, "The envoy initializer configuration configmap")
 	flag.StringVar(&initializerName, "initializer-name", defaultInitializerName, "The initializer name")
-	flag.StringVar(&namespace, "namespace", "default", "The configuration namespace")
+	flag.StringVar(&namespace, "namespace", "envoy-initializer", "The configuration namespace")
 	flag.BoolVar(&requireAnnotation, "require-annotation", false, "Require annotation for initialization")
 	flag.Parse()
 
@@ -135,11 +135,8 @@ func initializeDeployment(deployment *v1beta1.Deployment, c *config, clientset *
 		if initializerName == pendingInitializers[0].Name {
 			log.Printf("Initializing deployment: %s", deployment.Name)
 
-			o, err := runtime.NewScheme().DeepCopy(deployment)
-			if err != nil {
-				return err
-			}
-			initializedDeployment := o.(*v1beta1.Deployment)
+			o := deployment.DeepCopyObject()
+                        initializedDeployment := o.(*v1beta1.Deployment)
 
 			// Remove self from the list of pending Initializers while preserving ordering.
 			if len(pendingInitializers) == 1 {
@@ -153,7 +150,7 @@ func initializeDeployment(deployment *v1beta1.Deployment, c *config, clientset *
 				_, ok := a[annotation]
 				if !ok {
 					log.Printf("Required '%s' annotation missing; skipping envoy container injection", annotation)
-					_, err = clientset.AppsV1beta1().Deployments(deployment.Namespace).Update(initializedDeployment)
+					_, err := clientset.AppsV1beta1().Deployments(deployment.Namespace).Update(initializedDeployment)
 					if err != nil {
 						return err
 					}
